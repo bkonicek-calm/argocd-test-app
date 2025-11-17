@@ -43,5 +43,11 @@ spec:
         {{- toYaml .ignoreDifferences | nindent 8 }}
       {{- end }}
       syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply={{ .serverSideApply | default "false"}}
+          {{- if hasKey . "ignoreDifferences" }}
+          - RespectIgnoreDifferences=true
+          {{- end }}
         automated:
           enabled: {{ if hasKey . "autoSync" }}{{ .autoSync }}{{ else }}false{{ end }}
