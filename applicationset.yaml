@@ -1,0 +1,47 @@
+# Tools to deploy to Ops clusters with Helm
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: test-appset
+  namespace: argocd
+spec:
+  goTemplate: true
+  # goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/bkonicek-calm/argocd-test-app.git
+        revision: HEAD
+        files:
+          - path: apps/*/addons/*/config.yaml
+  template:
+    metadata:
+      name: '{{index .path.segments 1}}-{{.path.basenameNormalized}}'
+    spec:
+      project: default
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply={{ .serverSideApply | default "false"}}
+      sources:
+        - repoURL: '{{.repoURL}}'
+          targetRevision: '{{.revision}}'
+          chart: '{{.chartName | default .path.basenameNormalized}}'
+          helm:
+            releaseName: '{{.releaseName | default .path.basenameNormalized}}'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              # Use the values file in the current directory if it exists, e.g. environments/gcp/ops/addons/external-secrets-operator/values.yaml
+              - '{{.path.path}}/values.yaml'
+      destination:
+        server: "https://kubernetes.default.svc"
+        # Unless specified, the namespace will be the name of the folder containing the config.yaml file
+        namespace: '{{.namespace | default .path.basenameNormalized }}'
+  templatePatch: |
+    spec:
+      {{- if hasKey . "ignoreDifferences" }}
+      ignoreDifferences:
+        {{- toYaml .ignoreDifferences | nindent 8 }}
+      {{- end }}
+      syncPolicy:
+        automated:
+          enabled: {{ if hasKey . "autoSync" }}{{ .autoSync }}{{ else }}{{ eq (.path.segments 1) "dev" }}{{ end }}
