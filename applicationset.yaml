@@ -44,4 +44,4 @@ spec:
       {{- end }}
       syncPolicy:
         automated:
-          enabled: {{ if hasKey . "autoSync" }}{{ .autoSync }}{{ else }}{{ eq (.path.segments 1) "dev" }}{{ end }}
+          enabled: {{ if hasKey . "autoSync" }}{{ .autoSync }}{{ else }}false{{ end }}

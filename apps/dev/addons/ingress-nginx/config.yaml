@@ -1,2 +1,7 @@
 repoURL: https://kubernetes.github.io/ingress-nginx
 revision: 4.14.0
+ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/clientConfig/caBundle
